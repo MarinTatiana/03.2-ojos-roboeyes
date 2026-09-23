@@ -12,24 +12,47 @@
 #include "config.h"
 
 // TODO 1.1: Levanta el bus I2C compartido con los pines y la velocidad declarados en config.h.
-// Pregunta Guía: ¿Qué dos pines y qué velocidad necesita el bus antes de buscar el panel?
-// Pista: Los valores viven en config.h; el resultado esperado se describe en la guía §05.
 inline void initI2C() {
-    /* ESCRIBE TU CÓDIGO AQUÍ */
+    Wire.begin(OLED_SDA, OLED_SCL);
+    Wire.setClock(OLED_FREQ);
+    Serial.print("[I2C] bus listo SDA ");
+    Serial.print(OLED_SDA);
+    Serial.print(" SCL =");
+    Serial.println(OLED_SCL);
 }
 
 // TODO 1.2: Barre el rango completo de direcciones e informa cada dispositivo hallado y el conteo final.
-// Pregunta Guía: ¿Cómo sabes que el barrido cubrió todo el rango si el monitor solo muestra un conteo?
-// Pista: La guía §05 muestra el barrido esperado línea por línea.
 inline void scanI2C() {
-    /* ESCRIBE TU CÓDIGO AQUÍ */
+    Serial.println("[I2C] escaneando direcciones 1-126");
+    byte count = 0;
+    for (byte address = 1; address < 127; address++) {
+        Wire.beginTransmission(address);
+        byte error = Wire.endTransmission();
+        if (error == 0) {
+            Serial.print("[I2C] dispositivo en 0x");
+            if (address < 16) Serial.print("0");
+            Serial.println(address, HEX);
+            count++;
+        }
+    }
+    Serial.print("[I2C] dispositivos encontrados: ");
+    Serial.println(count);
 }
 
 // TODO 1.3: Sondea la dirección del panel e informa si responde o si el arranque debe detenerse.
-// Pregunta Guía: ¿Qué debe imprimir el arranque cuando el panel no responde?
-// Pista: Hay dos caminos, uno de éxito y uno fatal; la guía §05 los muestra.
 inline void testI2CDevice() {
-    /* ESCRIBE TU CÓDIGO AQUÍ */
+    Wire.beginTransmission(OLED_I2C_ADDR);
+    byte error = Wire.endTransmission();
+    if (error == 0) {
+        Serial.print("[POST] OLED responde en 0x");
+        Serial.println(OLED_I2C_ADDR, HEX);
+    } else {
+        Serial.println("[POST ERROR] OLED no responde en la dirección esperada");
+        while (true) {
+            // Detiene el arranque a propósito si el panel no responde
+            delay(1000);
+        }
+    }
 }
 
 #endif
